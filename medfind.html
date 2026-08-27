@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedFind — Book a Doctor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFF3F0;
+    --surface:#FFFFFF;
+    --surface-soft:#F5F8F6;
+    --ink:#13241F;
+    --ink-soft:#4C6B63;
+    --ink-faint:#8AA39B;
+    --teal:#1F5E52;
+    --teal-dark:#123B34;
+    --teal-line: rgba(31,94,82,0.16);
+    --gold:#B98A1E;
+    --gold-soft:#F3E6C4;
+    --brick:#AA4630;
+    --brick-soft:#F5DDD5;
+    --line:#DCE5E0;
+    --shadow: 0 8px 24px rgba(18,59,52,0.08);
+    --serif:'Fraunces', serif;
+    --sans:'Inter', sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{min-height:100vh;}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  input,select{font-family:inherit;}
+  ::selection{background:var(--gold-soft);}
+
+  /* ---------- Loading ---------- */
+  .boot{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px; color:var(--ink-soft);
+  }
+  .boot .seal{width:46px;height:46px;border-radius:50%;border:3px solid var(--teal-line); border-top-color:var(--teal); animation:spin 0.9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Auth screen ---------- */
+  .auth-wrap{
+    min-height:100vh; display:grid; grid-template-columns: 1.1fr 1fr;
+  }
+  @media (max-width: 880px){ .auth-wrap{grid-template-columns:1fr;} .auth-visual{display:none;} }
+
+  .auth-visual{
+    background: radial-gradient(120% 140% at 15% 10%, #1C544A 0%, var(--teal-dark) 55%, #0C2622 100%);
+    color:#EAF3EF; padding:56px 52px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;
+  }
+  .auth-visual::before{
+    content:""; position:absolute; inset:0;
+    background-image: radial-gradient(circle, rgba(234,243,239,0.10) 1px, transparent 1.4px);
+    background-size: 26px 26px; opacity:0.5;
+  }
+  .brand-mark{display:flex; align-items:center; gap:12px; position:relative; z-index:1;}
+  .brand-mark .chain-icon{width:34px;height:34px;}
+  .brand-mark .name{font-family:var(--serif); font-size:22px; font-weight:600; letter-spacing:0.2px;}
+  .auth-visual h1{
+    font-family:var(--serif); font-weight:600; font-size:42px; line-height:1.12; margin:0 0 18px; position:relative; z-index:1; max-width:460px;
+  }
+  .auth-visual p{color:#B9D3CB; font-size:15.5px; line-height:1.6; max-width:420px; position:relative; z-index:1;}
+  .chain-strip{display:flex; gap:10px; margin-top:34px; position:relative; z-index:1;}
+  .chain-block{
+    border:1px solid rgba(234,243,239,0.28); border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:11px; color:#CFE3DC; background:rgba(255,255,255,0.04);
+  }
+  .chain-block b{display:block; color:var(--gold-soft); font-family:var(--sans); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px;}
+  .auth-foot{font-size:12.5px; color:#8FB0A6; position:relative; z-index:1;}
+
+  .auth-panel{display:flex; align-items:center; justify-content:center; padding:40px 24px;}
+  .auth-card{width:100%; max-width:380px;}
+  .auth-tabs{display:flex; gap:4px; background:var(--surface-soft); border-radius:999px; padding:4px; margin-bottom:28px;}
+  .auth-tabs button{
+    flex:1; border:none; background:transparent; padding:10px 0; border-radius:999px; font-weight:600; font-size:14px; color:var(--ink-soft); transition:all .15s;
+  }
+  .auth-tabs button.active{background:var(--teal); color:#fff;}
+  .auth-card h2{font-family:var(--serif); font-size:26px; margin:0 0 6px;}
+  .auth-card .sub{color:var(--ink-soft); font-size:13.5px; margin-bottom:22px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; letter-spacing:0.01em;}
+  .field input, .field select{
+    width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:14.5px; background:#fff; color:var(--ink); outline:none; transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus{border-color:var(--teal);}
+  .btn-primary{
+    width:100%; padding:12.5px 0; background:var(--teal); color:#fff; border:none; border-radius:10px; font-weight:700; font-size:14.5px; margin-top:6px; transition:background .15s;
+  }
+  .btn-primary:hover{background:var(--teal-dark);}
+  .btn-ghost{
+    background:transparent; border:1.5px solid var(--line); color:var(--ink); border-radius:10px; padding:10px 16px; font-weight:600; font-size:13.5px;
+  }
+  .btn-ghost:hover{border-color:var(--teal); color:var(--teal);}
+  .auth-msg{font-size:13px; padding:10px 12px; border-radius:8px; margin-bottom:14px;}
+  .auth-msg.err{background:var(--brick-soft); color:var(--brick);}
+  .auth-msg.ok{background:#DCEFE7; color:var(--teal-dark);}
+  .demo-note{margin-top:18px; font-size:11.5px; color:var(--ink-faint); line-height:1.5;}
+
+  /* ---------- App shell ---------- */
+  .shell{display:grid; grid-template-columns: 240px 1fr; min-height:100vh;}
+  @media (max-width: 880px){ .shell{grid-template-columns:1fr;} .sidebar{display:none;} .mobile-nav{display:flex;} }
+
+  .sidebar{
+    background:var(--teal-dark); color:#EAF3EF; padding:26px 18px; display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+  }
+  .sidebar .brand-mark{margin-bottom:30px; padding-left:6px;}
+  .sidebar .brand-mark .name{font-size:18px;}
+  .nav-item{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px; color:#BFDAD1; font-size:14px; font-weight:600; margin-bottom:2px; border:none; background:transparent; width:100%; text-align:left;
+  }
+  .nav-item .ic{width:18px; text-align:center; font-size:15px;}
+  .nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  .nav-item.active{background:rgba(255,255,255,0.12); color:#fff;}
+  .sidebar-foot{margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1);}
+  .user-chip{display:flex; align-items:center; gap:9px; padding:8px 6px; font-size:13px; color:#CFE3DC;}
+  .user-chip .av{width:30px;height:30px;border-radius:50%; background:var(--gold); color:#3A2C05; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;}
+  .logout-btn{width:100%; margin-top:8px; background:transparent; border:1px solid rgba(255,255,255,0.18); color:#EAF3EF; border-radius:8px; padding:8px; font-size:12.5px; font-weight:600;}
+  .logout-btn:hover{border-color:var(--brick); color:#FBD8CC;}
+
+  .mobile-nav{display:none; position:sticky; top:0; z-index:20; background:var(--teal-dark); padding:10px 12px; gap:6px; overflow-x:auto;}
+  .mobile-nav button{flex:none; background:transparent; border:none; color:#BFDAD1; font-size:12.5px; font-weight:700; padding:8px 12px; border-radius:8px; white-space:nowrap;}
+  .mobile-nav button.active{background:rgba(255,255,255,0.14); color:#fff;}
+
+  .main{padding:30px 34px 60px; max-width:1180px; width:100%;}
+  @media (max-width:600px){.main{padding:20px 16px 50px;}}
+  .page-head{margin-bottom:26px;}
+  .page-head .eyebrow{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); margin-bottom:6px;}
+  .page-head h1{font-family:var(--serif); font-size:30px; margin:0 0 6px; font-weight:600;}
+  .page-head p{color:var(--ink-soft); font-size:14.5px; margin:0; max-width:600px;}
+
+  /* ---------- Cards / stats ---------- */
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:30px;}
+  @media (max-width:880px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px;}
+  .stat-card .num{font-family:var(--serif); font-size:28px; font-weight:600; color:var(--teal-dark);}
+  .stat-card .lbl{font-size:12px; color:var(--ink-soft); margin-top:2px; font-weight:600;}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);}
+  .panel{padding:22px 24px;}
+
+  /* ---------- Doctor grid ---------- */
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  .toolbar input, .toolbar select{padding:10px 13px; border:1.5px solid var(--line); border-radius:10px; font-size:14px; background:#fff;}
+  .toolbar input{flex:1; min-width:180px;}
+  .doc-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;}
+  .doc-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; cursor:pointer; transition:transform .12s, box-shadow .12s; position:relative;
+  }
+  .doc-card:hover{transform:translateY(-3px); box-shadow:var(--shadow);}
+  .doc-top{display:flex; gap:12px; align-items:center; margin-bottom:12px;}
+  .avatar{width:52px;height:52px;border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:600; font-size:17px; color:#fff; flex:none;}
+  .doc-name{font-weight:700; font-size:15.5px;}
+  .doc-spec{font-size:12.5px; color:var(--teal); font-weight:600;}
+  .doc-meta-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);}
+  .stars{color:var(--gold); font-size:13px; letter-spacing:1px;}
+  .fee-tag{font-weight:700; color:var(--teal-dark); font-family:var(--mono); font-size:13px;}
+
+  /* ---------- Doctor profile ---------- */
+  .profile-head{display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap;}
+  .profile-head .avatar{width:78px;height:78px;font-size:26px;}
+  .profile-head h2{font-family:var(--serif); font-size:24px; margin:0 0 4px;}
+  .badge{display:inline-block; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--surface-soft); color:var(--teal-dark); margin-right:6px; border:1px solid var(--teal-line);}
+  .metric-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:22px 0;}
+  @media (max-width:700px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
+  .metric{background:var(--surface-soft); border-radius:10px; padding:14px 14px;}
+  .metric .v{font-family:var(--serif); font-size:20px; font-weight:600; color:var(--teal-dark);}
+  .metric .k{font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-top:2px;}
+  .bio{font-size:14px; color:var(--ink-soft); line-height:1.65; margin:16px 0 22px;}
+
+  .day-strip{display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:16px;}
+  .day-chip{
+    flex:none; border:1.5px solid var(--line); border-radius:10px; padding:9px 13px; text-align:center; background:#fff; min-width:64px;
+  }
+  .day-chip .d{font-size:11px; color:var(--ink-soft); font-weight:600;}
+  .day-chip .n{font-family:var(--serif); font-size:17px; font-weight:600;}
+  .day-chip.sel{border-color:var(--teal); background:var(--teal); color:#fff;}
+  .day-chip.sel .d{color:#CFE3DC;}
+
+  .slot-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px; margin-bottom:18px;}
+  .slot{
+    border:1.5px solid var(--line); border-radius:9px; padding:9px 4px; text-align:center; font-size:12.5px; font-weight:600; background:#fff; color:var(--ink);
+  }
+  .slot.sel{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .slot[disabled]{background:var(--surface-soft); color:var(--ink-faint); border-color:var(--line); cursor:not-allowed; text-decoration:line-through;}
+
+  .confirm-box{background:var(--surface-soft); border:1px dashed var(--teal-line); border-radius:12px; padding:16px 18px; margin-top:6px;}
+
+  /* ---------- Appointments ---------- */
+  .appt-row{
+    display:flex; justify-content:space-between; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid var(--line); flex-wrap:wrap;
+  }
+  .appt-row:last-child{border-bottom:none;}
+  .appt-doc{display:flex; align-items:center; gap:12px;}
+  .status-pill{font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px;}
+  .status-pill.upcoming{background:#DCEFE7; color:var(--teal-dark);}
+  .status-pill.completed{background:var(--gold-soft); color:#6E5210;}
+  .status-pill.cancelled{background:var(--brick-soft); color:var(--brick);}
+  .row-actions{display:flex; gap:8px;}
+  .btn-sm{border:1.5px solid var(--line); background:#fff; border-radius:8px; padding:7px 12px; font-size:12.5px; font-weight:700;}
+  .btn-sm.danger:hover{border-color:var(--brick); color:var(--brick);}
+  .btn-sm.gold:hover{border-color:var(--gold); color:var(--gold);}
+  .rate-stars{display:flex; gap:4px; margin-top:4px;}
+  .rate-stars span{font-size:19px; color:var(--line); cursor:pointer;}
+  .rate-stars span.on{color:var(--gold);}
+
+  /* ---------- Ledger ---------- */
+  .ledger-note, .erp-note{
+    background:var(--surface-soft); border:1px solid var(--teal-line); border-radius:12px; padding:14px 16px; font-size:13px; color:var(--ink-soft); margin-bottom:22px; line-height:1.55;
+  }
+  .block{display:flex; gap:14px; margin-bottom:0;}
+  .block .rail{display:flex; flex-direction:column; align-items:center; width:20px;}
+  .block .dot{width:11px;height:11px;border-radius:50%; background:var(--teal); margin-top:6px; flex:none;}
+  .block .line{width:2px; flex:1; background:var(--teal-line);}
+  .block-card{flex:1; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:16px;}
+  .block-card .idx{font-family:var(--mono); font-size:11px; color:var(--gold); font-weight:700;}
+  .block-card .ev{font-weight:700; font-size:14px; margin:2px 0 8px;}
+  .hash-line{font-family:var(--mono); font-size:11px; color:var(--ink-soft); word-break:break-all; line-height:1.6;}
+  .hash-line b{color:var(--ink);}
+
+  .erp-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .erp-table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); padding:8px 10px; border-bottom:1.5px solid var(--line);}
+  .erp-table td{padding:10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .sync-ok{color:var(--teal-dark); font-weight:700; font-size:12px;}
+
+  .empty{text-align:center; padding:50px 20px; color:var(--ink-soft);}
+  .empty .ic{font-size:34px; margin-bottom:10px;}
+
+  .toast{
+    position:fixed; bottom:22px; right:22px; background:var(--teal-dark); color:#EAF3EF; padding:13px 18px; border-radius:10px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow); z-index:50; max-width:320px;
+    animation: rise .25s ease;
+  }
+  @keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  .modal-back{position:fixed; inset:0; background:rgba(18,59,52,0.45); display:flex; align-items:center; justify-content:center; z-index:40; padding:20px;}
+  .modal{background:#fff; border-radius:16px; max-width:640px; width:100%; max-height:88vh; overflow-y:auto; padding:26px 28px; position:relative;}
+  .modal-close{position:absolute; top:16px; right:18px; background:transparent; border:none; font-size:20px; color:var(--ink-soft);}
+
+  /* ---------- Subscription: plan picker (signup) ---------- */
+  .plan-picker{display:flex; flex-direction:column; gap:8px; margin-bottom:14px;}
+  .plan-opt{display:flex; align-items:center; gap:10px; border:1.5px solid var(--line); border-radius:10px; padding:11px 13px; cursor:pointer; transition:border-color .15s;}
+  .plan-opt input{width:auto; margin:0;}
+  .plan-opt.checked{border-color:var(--teal); background:var(--surface-soft);}
+  .plan-opt .pname{font-weight:700; font-size:13.5px;}
+  .plan-opt .pprice{font-family:var(--mono); font-size:12.5px; color:var(--teal-dark); font-weight:700;}
+  .plan-opt .psave{font-size:11px; color:var(--gold); font-weight:700; margin-left:6px;}
+  .plan-opt .pdesc{font-size:11.5px; color:var(--ink-soft); flex:1;}
+
+  /* ---------- Subscription: banner / lockout ---------- */
+  .sub-banner{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:var(--brick-soft); color:var(--brick); border:1px solid rgba(170,70,48,0.28); border-radius:12px; padding:13px 16px; margin-bottom:22px; font-size:13.5px;}
+  .sub-banner b{display:block; font-size:14px; margin-bottom:2px;}
+  .sub-banner .btn-primary{width:auto; margin:0; padding:9px 16px; background:var(--brick);}
+  .sub-banner .btn-primary:hover{background:#8B3623;}
+
+  .lockout-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; background:var(--bg);}
+  .lockout-card{max-width:480px; width:100%; background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:36px 32px; text-align:center;}
+  .lockout-card .lockicon{font-size:38px; margin-bottom:10px;}
+  .lockout-card h2{font-family:var(--serif); font-size:24px; margin:0 0 8px;}
+  .lockout-card p{color:var(--ink-soft); font-size:14px; line-height:1.6; margin:0 0 22px;}
+  .lockout-plans{display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:16px;}
+  .lockout-plan{border:1.5px solid var(--line); border-radius:12px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .lockout-plan .pname{font-weight:700; font-size:14px;}
+  .lockout-plan .pprice{font-size:12.5px; color:var(--ink-soft);}
+  .lockout-plan button{background:var(--teal); color:#fff; border:none; border-radius:8px; padding:9px 16px; font-weight:700; font-size:13px;}
+  .lockout-plan button:hover{background:var(--teal-dark);}
+  .lockout-foot{font-size:12px; color:var(--ink-faint);}
+
+  /* ---------- Billing tab ---------- */
+  .billing-card{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:18px; margin-bottom:24px;}
+  .billing-status{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px;}
+  .billing-status.active{background:#DCEFE7; color:var(--teal-dark);}
+  .billing-status.expired{background:var(--brick-soft); color:var(--brick);}
+  .plan-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin:18px 0 8px;}
+  @media (max-width:700px){.plan-grid{grid-template-columns:1fr;}}
+  .plan-buy{border:1.5px solid var(--line); border-radius:12px; padding:16px; background:var(--surface-soft);}
+  .plan-buy.current{border-color:var(--teal); background:#fff;}
+  .plan-buy .pt{font-weight:700; font-size:15px; margin-bottom:2px;}
+  .plan-buy .pp{font-family:var(--mono); color:var(--teal-dark); font-weight:700; font-size:14px; margin-bottom:8px;}
+  .plan-buy button{width:100%; padding:9px 0; background:var(--teal); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:13px;}
+  .plan-buy button:hover{background:var(--teal-dark);}
+  .pay-history{width:100%; border-collapse:collapse; font-size:13px; margin-top:8px;}
+  .pay-history th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); padding:8px 10px; border-bottom:1.5px solid var(--line);}
+  .pay-history td{padding:9px 10px; border-bottom:1px solid var(--line);}
+
+  /* ---------- Hospitals ---------- */
+  .hosp-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px;}
+  .hosp-avail-badge{font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px; white-space:nowrap;}
+  .hosp-avail-badge.yes{background:#DCEFE7; color:var(--teal-dark);}
+  .hosp-avail-badge.no{background:var(--brick-soft); color:var(--brick);}
+  .hosp-doc-list{margin-top:16px; padding-top:14px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:10px;}
+  .hosp-doc-row{display:flex; align-items:center; gap:10px; cursor:pointer; padding:6px; border-radius:8px; transition:background .12s;}
+  .hosp-doc-row:hover{background:var(--surface-soft);}
+  .doc-avail-dot{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; flex:none;}
+  .doc-avail-dot.yes{background:#DCEFE7; color:var(--teal-dark);}
+  .doc-avail-dot.no{background:var(--surface-soft); color:var(--ink-faint);}
+
+  /* ---------- Admin dashboard ---------- */
+  .admin-two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:880px){.admin-two-col{grid-template-columns:1fr;}}
+  .admin-bar-row{margin-bottom:13px;}
+  .admin-bar-row:last-child{margin-bottom:0;}
+  .admin-bar-label{display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:5px;}
+  .admin-bar-track{height:10px; background:var(--surface-soft); border-radius:999px; overflow:hidden;}
+  .admin-bar-fill{height:100%; border-radius:999px;}
+  .admin-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .admin-table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); padding:8px 10px; border-bottom:1.5px solid var(--line);}
+  .admin-table td{padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  code{background:var(--surface-soft); padding:1px 6px; border-radius:5px; font-family:var(--mono); font-size:11px;}
+</style>
+</head>
+<body>
+<div id="app"><div class="boot"><div class="seal"></div><div>Loading MedFind…</div></div></div>
+
+<script>
+/* =========================================================
+   MedFind — prototype doctor booking app
+   Persistence: window.storage (personal, per-account scope)
+   "Blockchain": a genuine SHA-256 hash-chain over booking
+   events — a real tamper-evidence mechanism, but a local
+   simulation, not a distributed network.
+   "ERP sync": a mock log — wiring a real ERP (SAP, Oracle
+   Health, a hospital's own system) needs that vendor's API
+   and credentials, which this demo can't hold.
+   ========================================================= */
+
+const STORAGE_KEY = 'mediledger-state-v1';
+let STATE = null;
+
+const SPECIALTIES = ["Cardiology","Dermatology","Pediatrics","Orthopedics","Neurology","General Practice","Dentistry","Psychiatry","Gynecology","ENT"];
+const AVATAR_COLORS = ["#1F5E52","#B98A1E","#AA4630","#3E6FA6","#7A5AA6","#2E8B7A","#A6663E"];
+
+/* ---------- subscription plans ---------- */
+const PLANS = {
+  monthly: { label:'Monthly', price:499, days:30, desc:'Billed every 30 days' },
+  annual:  { label:'Annual',  price:4999, days:365, desc:'Billed once a year — save ~17%' }
+};
+
+/* ---------- hospitals ---------- */
+const HOSPITALS = [
+  { id:'hosp_1', name:'Metro Grace General Hospital', address:'123 Rizal Ave, Davao City' },
+  { id:'hosp_2', name:'St. Anthony Medical Center', address:'45 J.P. Laurel Ave, Davao City' },
+  { id:'hosp_3', name:'Riverside Community Hospital', address:'78 Quimpo Blvd, Davao City' }
+];
+
+function seedDoctors(){
+  const names = [
+    ["Dr. Amara Cruz","Cardiology","Heart rhythm disorders, hypertension management, and preventive cardiology for adults."],
+    ["Dr. Leon Marquez","Dermatology","Skin conditions, acne treatment, and minor dermatologic procedures."],
+    ["Dr. Priya Santos","Pediatrics","Newborn to teen care, vaccinations, and developmental checkups."],
+    ["Dr. Ken Villanueva","Orthopedics","Sports injuries, joint pain, and post-fracture rehabilitation."],
+    ["Dr. Sofia Reyes","Neurology","Migraines, seizure disorders, and nerve-related conditions."],
+    ["Dr. Marco Tan","General Practice","Everyday illnesses, check-ups, and referrals to specialists."],
+    ["Dr. Elena Bautista","Dentistry","Cleanings, fillings, and general oral health."],
+    ["Dr. Julian Dizon","Psychiatry","Anxiety, depression, and medication management."],
+    ["Dr. Carmela Uy","Gynecology","Women's reproductive health and prenatal care."],
+    ["Dr. Rafael Ong","ENT","Ear, nose, throat conditions and sinus issues."]
+  ];
+  return names.map((n,i)=>({
+    id:'doc_'+(i+1),
+    name:n[0],
+    specialty:n[1],
+    bio:n[2],
+    yearsExperience: 4 + Math.floor(Math.random()*20),
+    fee: [800,950,1200,1500,1800,2000][Math.floor(Math.random()*6)],
+    rating: +(3.9 + Math.random()*1.1).toFixed(1),
+    ratingCount: 20 + Math.floor(Math.random()*180),
+    visits: 60 + Math.floor(Math.random()*400),
+    initials: n[0].split(' ').filter(w=>w!=='Dr.').map(w=>w[0]).join('').slice(0,2),
+    color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+    hospitalId: HOSPITALS[i % HOSPITALS.length].id,
+    bookedSlots: {}
+  }));
+}
+
+function defaultState(){
+  return { users:[], session:null, doctors:seedDoctors(), bookings:[], ledger:[], erpLog:[] };
+}
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    STATE = res && res.value ? JSON.parse(res.value) : defaultState();
+  }catch(e){
+    STATE = defaultState();
+  }
+  if(!STATE.doctors || !STATE.doctors.length) STATE.doctors = seedDoctors();
+  if(!STATE.users.some(u=>u.isAdmin)){
+    const adminHash = await sha256Hex('admin123::admin');
+    STATE.users.push({
+      username:'admin', passwordHash:adminHash, name:'System Admin', email:'admin@medfind.app',
+      createdAt:new Date().toISOString(), isAdmin:true
+    });
+  }
+  await persist();
+}
+async function persist(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(STATE), false); }
+  catch(e){ console.error('storage save failed', e); }
+}
+
+/* ---------- crypto helpers ---------- */
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function addLedgerBlock(eventLabel, data){
+  const prev = STATE.ledger.length ? STATE.ledger[STATE.ledger.length-1].hash : '0'.repeat(64);
+  const timestamp = new Date().toISOString();
+  const payload = JSON.stringify(data);
+  const hash = await sha256Hex(prev + payload + timestamp);
+  STATE.ledger.push({ index: STATE.ledger.length, event: eventLabel, data, timestamp, prevHash: prev, hash });
+}
+function addErpLog(event, module, detail){
+  STATE.erpLog.unshift({ timestamp:new Date().toISOString(), event, module, detail });
+}
+
+/* ---------- utils ---------- */
+function fmtDate(d){ return d.toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'}); }
+function isoDay(d){ return d.toISOString().slice(0,10); }
+function money(n){ return '₱' + n.toLocaleString(); }
+function starString(rating){
+  const full = Math.round(rating);
+  return '★'.repeat(full) + '☆'.repeat(5-full);
+}
+function timeSlotsForDay(){
+  const slots = [];
+  for(let h=9; h<17; h++){
+    if(h===12) continue; // lunch
+    slots.push(String(h).padStart(2,'0')+':00');
+    slots.push(String(h).padStart(2,'0')+':30');
+  }
+  return slots;
+}
+function nextDays(n){
+  const out = [];
+  const today = new Date();
+  for(let i=0;i<n;i++){
+    const d = new Date(today); d.setDate(today.getDate()+i);
+    out.push(d);
+  }
+  return out;
+}
+function currentUser(){
+  if(!STATE.session) return null;
+  return STATE.users.find(u=>u.username===STATE.session) || null;
+}
+
+/* ---------- subscription helpers ---------- */
+function makeSubscription(plan){
+  const now = new Date();
+  const expires = new Date(now); expires.setDate(expires.getDate()+PLANS[plan].days);
+  return {
+    plan, status:'active', warned:false,
+    startedAt: now.toISOString(), expiresAt: expires.toISOString(),
+    history: [{ date: now.toISOString(), plan, amount: PLANS[plan].price }]
+  };
+}
+// Re-evaluates whether a subscription has lapsed based on the current date.
+function refreshSubscription(u){
+  if(!u || !u.subscription) return;
+  if(u.subscription.status==='active' && new Date(u.subscription.expiresAt) < new Date()){
+    u.subscription.status = 'expired';
+  }
+}
+// Called once per login (not per render) so a warned-but-unpaid user only
+// gets fully locked out the *next* time they come back, after being notified.
+function checkSubscriptionOnEntry(u){
+  if(!u || u.isAdmin){ VIEW.subLocked = false; return; }
+  refreshSubscription(u);
+  if(u.subscription.status==='expired'){
+    if(u.subscription.warned){
+      VIEW.subLocked = true;
+    } else {
+      u.subscription.warned = true;
+      VIEW.subLocked = false;
+      VIEW.subJustWarned = true;
+    }
+  } else {
+    u.subscription.warned = false;
+    VIEW.subLocked = false;
+  }
+}
+function daysLeft(iso){
+  return Math.ceil((new Date(iso) - new Date()) / 86400000);
+}
+async function paySubscription(plan){
+  const u = currentUser();
+  if(!u || !PLANS[plan]) return;
+  const now = new Date();
+  const base = (u.subscription && u.subscription.status==='active' && new Date(u.subscription.expiresAt) > now)
+    ? new Date(u.subscription.expiresAt) : now;
+  const expires = new Date(base); expires.setDate(expires.getDate()+PLANS[plan].days);
+  if(!u.subscription) u.subscription = makeSubscription(plan);
+  u.subscription.plan = plan;
+  u.subscription.status = 'active';
+  u.subscription.warned = false;
+  u.subscription.expiresAt = expires.toISOString();
+  u.subscription.history = u.subscription.history || [];
+  u.subscription.history.unshift({ date: now.toISOString(), plan, amount: PLANS[plan].price });
+  VIEW.subLocked = false;
+  VIEW.subJustWarned = false;
+  await addLedgerBlock('subscription_paid', { user:u.username, plan, amount:PLANS[plan].price, expiresAt:u.subscription.expiresAt });
+  addErpLog('Subscription payment received', 'Billing', `${u.name} paid ${money(PLANS[plan].price)} (${PLANS[plan].label}) — active until ${new Date(u.subscription.expiresAt).toLocaleDateString()}`);
+  await persist();
+  toast('Payment successful — subscription active until '+new Date(u.subscription.expiresAt).toLocaleDateString());
+  VIEW.tab = 'billing';
+  render();
+}
+
+/* ---------- hospital helpers ---------- */
+function doctorAvailableToday(d){
+  const today = isoDay(new Date());
+  const nowHM = new Date().toTimeString().slice(0,5);
+  const booked = d.bookedSlots[today] || [];
+  return timeSlotsForDay().some(t => t > nowHM && !booked.includes(t));
+}
+
+/* ---------- admin analytics ---------- */
+function computeAdminStats(){
+  const customers = STATE.users.filter(u=>!u.isAdmin);
+  const payments = [];
+  customers.forEach(u=>{
+    ((u.subscription && u.subscription.history) || []).forEach(h=>{
+      payments.push({ date:h.date, plan:h.plan, amount:h.amount, username:u.username, name:u.name });
+    });
+  });
+  payments.sort((a,b)=> new Date(b.date)-new Date(a.date));
+
+  const totalRevenue = payments.reduce((s,p)=>s+p.amount,0);
+  const monthlyRevenue = payments.filter(p=>p.plan==='monthly').reduce((s,p)=>s+p.amount,0);
+  const annualRevenue = payments.filter(p=>p.plan==='annual').reduce((s,p)=>s+p.amount,0);
+  const activeSubs = customers.filter(u=>u.subscription && u.subscription.status==='active').length;
+  const expiredSubs = customers.filter(u=>u.subscription && u.subscription.status==='expired').length;
+
+  const byMonth = {};
+  payments.forEach(p=>{
+    const key = p.date.slice(0,7);
+    byMonth[key] = (byMonth[key]||0) + p.amount;
+  });
+  const months = Object.keys(byMonth).sort().slice(-6);
+  const monthData = months.map(m=>({ month:m, amount:byMonth[m] }));
+  const maxMonth = Math.max(1, ...monthData.map(m=>m.amount));
+
+  const bookings = STATE.bookings;
+  const completed = bookings.filter(b=>b.status==='completed');
+  const consultationVolume = completed.reduce((s,b)=>s+b.fee,0);
+
+  return {
+    customers, payments, totalRevenue, monthlyRevenue, annualRevenue,
+    activeSubs, expiredSubs, monthData, maxMonth,
+    totalBookings: bookings.length,
+    upcoming: bookings.filter(b=>b.status==='upcoming').length,
+    completed: completed.length,
+    cancelled: bookings.filter(b=>b.status==='cancelled').length,
+    consultationVolume
+  };
+}
+function toast(msg){
+  const el = document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+
+/* ---------- view/router state ---------- */
+let VIEW = { tab:'dashboard', authTab:'login', selectedDoctor:null, selectedDate:null, selectedSlot:null, authMsg:null, signupPlan:'monthly', subLocked:false, subJustWarned:false };
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ================= RENDER ================= */
+function render(){
+  const root = document.getElementById('app');
+  if(!STATE.session){ root.innerHTML = renderAuth(); bindAuthEvents(); return; }
+  if(VIEW.subLocked){ root.innerHTML = renderLockout(); bindLockoutEvents(); return; }
+  root.innerHTML = renderShell();
+  bindShellEvents();
+}
+
+/* ---------- AUTH ---------- */
+function renderAuth(){
+  const isLogin = VIEW.authTab==='login';
+  return `
+  <div class="auth-wrap">
+    <div class="auth-visual">
+      <div class="brand-mark">
+        <svg class="chain-icon" viewBox="0 0 34 34" fill="none"><circle cx="12" cy="12" r="7" stroke="#EAF3EF" stroke-width="2.4"/><circle cx="22" cy="22" r="7" stroke="#B98A1E" stroke-width="2.4"/></svg>
+        <div class="name">MedFind</div>
+      </div>
+      <div>
+        <h1>Book the right doctor, see exactly when they're free.</h1>
+        <p>Compare specialty, years of experience, consultation fee and patient ratings — then reserve a verified time slot. Every booking is chained into a tamper-evident record.</p>
+        <div class="chain-strip">
+          <div class="chain-block"><b>Block 01</b>appointment_created</div>
+          <div class="chain-block"><b>Block 02</b>erp_synced</div>
+          <div class="chain-block"><b>Block 03</b>rating_recorded</div>
+        </div>
+      </div>
+      <div class="auth-foot">Prototype build — data is stored to your account's private app storage, not a production database.</div>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button data-authtab="login" class="${isLogin?'active':''}">Log in</button>
+          <button data-authtab="signup" class="${!isLogin?'active':''}">Sign up</button>
+        </div>
+        ${isLogin ? `
+          <h2>Welcome back</h2>
+          <div class="sub">Log in to view your appointments.</div>
+          ${VIEW.authMsg ? `<div class="auth-msg ${VIEW.authMsg.type}">${esc(VIEW.authMsg.text)}</div>` : ''}
+          <form id="loginForm">
+            <div class="field"><label>Username</label><input required name="username" placeholder="e.g. juan_dc"></div>
+            <div class="field"><label>Password</label><input required name="password" type="password" placeholder="••••••••"></div>
+            <button class="btn-primary" type="submit">Log in</button>
+          </form>
+        ` : `
+          <h2>Create your account</h2>
+          <div class="sub">Sign up to start booking doctors.</div>
+          ${VIEW.authMsg ? `<div class="auth-msg ${VIEW.authMsg.type}">${esc(VIEW.authMsg.text)}</div>` : ''}
+          <form id="signupForm">
+            <div class="field"><label>Full name</label><input required name="name" placeholder="Juan Dela Cruz"></div>
+            <div class="field"><label>Email</label><input required type="email" name="email" placeholder="juan@email.com"></div>
+            <div class="field"><label>Username</label><input required name="username" placeholder="juan_dc"></div>
+            <div class="field"><label>Password</label><input required minlength="4" type="password" name="password" placeholder="At least 4 characters"></div>
+            <div class="field">
+              <label>Subscription plan</label>
+              <div class="plan-picker">
+                ${Object.entries(PLANS).map(([key,p])=>`
+                  <label class="plan-opt ${VIEW.signupPlan===key?'checked':''}">
+                    <input type="radio" name="plan" value="${key}" ${VIEW.signupPlan===key?'checked':''}>
+                    <span class="pdesc"><span class="pname">${p.label}</span> — ${esc(p.desc)}</span>
+                    <span class="pprice">${money(p.price)}</span>
+                  </label>`).join('')}
+              </div>
+            </div>
+            <button class="btn-primary" type="submit">Create account & pay</button>
+          </form>
+        `}
+        <div class="demo-note">Prototype auth for demo purposes — passwords are hashed before storage but this isn't a substitute for production-grade authentication.<br><br><b>Admin demo login</b> — username: <code>admin</code> · password: <code>admin123</code></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bindAuthEvents(){
+  document.querySelectorAll('[data-authtab]').forEach(b=>{
+    b.onclick = ()=>{ VIEW.authTab = b.dataset.authtab; VIEW.authMsg=null; render(); };
+  });
+  const lf = document.getElementById('loginForm');
+  if(lf) lf.onsubmit = async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(lf);
+    const username = fd.get('username').trim();
+    const password = fd.get('password');
+    const hash = await sha256Hex(password+'::'+username);
+    const user = STATE.users.find(u=>u.username===username);
+    if(!user || user.passwordHash!==hash){
+      VIEW.authMsg = {type:'err', text:'Incorrect username or password.'};
+      render(); return;
+    }
+    STATE.session = username;
+    VIEW.authMsg = null;
+    checkSubscriptionOnEntry(user);
+    if(user.isAdmin) VIEW.tab = 'admin';
+    await persist();
+    render();
+    if(VIEW.subLocked){
+      toast('Your subscription lapsed and was not renewed — account locked.');
+    } else if(VIEW.subJustWarned){
+      toast('⚠️ Your subscription expired. Please renew to avoid losing access.');
+    }
+  };
+  const sf = document.getElementById('signupForm');
+  document.querySelectorAll('#signupForm .plan-opt input').forEach(r=>{
+    r.onchange = ()=>{ VIEW.signupPlan = r.value; render(); };
+  });
+  if(sf) sf.onsubmit = async (e)=>{
+    e.preventDefault();
+    const fd = new FormData(sf);
+    const username = fd.get('username').trim();
+    if(STATE.users.some(u=>u.username===username)){
+      VIEW.authMsg = {type:'err', text:'That username is already taken.'};
+      render(); return;
+    }
+    const password = fd.get('password');
+    const passwordHash = await sha256Hex(password+'::'+username);
+    const plan = fd.get('plan') || 'monthly';
+    const subscription = makeSubscription(plan);
+    STATE.users.push({ username, passwordHash, name:fd.get('name').trim(), email:fd.get('email').trim(), createdAt:new Date().toISOString(), subscription });
+    STATE.session = username;
+    await addLedgerBlock('subscription_paid', { user:username, plan, amount:PLANS[plan].price, expiresAt:subscription.expiresAt });
+    addErpLog('Subscription payment received', 'Billing', `${fd.get('name').trim()} paid ${money(PLANS[plan].price)} (${PLANS[plan].label}) — active until ${new Date(subscription.expiresAt).toLocaleDateString()}`);
+    await persist();
+    render();
+    toast('Account created — welcome, '+fd.get('name').trim().split(' ')[0]+'! Your '+PLANS[plan].label.toLowerCase()+' plan is active.');
+  };
+}
+
+/* ---------- SUBSCRIPTION LOCKOUT ---------- */
+function renderLockout(){
+  const u = currentUser();
+  const expiredOn = u.subscription ? new Date(u.subscription.expiresAt).toLocaleDateString() : '';
+  return `
+  <div class="lockout-wrap">
+    <div class="lockout-card">
+      <div class="lockicon">🔒</div>
+      <h2>MedFind is locked</h2>
+      <p>Hi ${esc(u.name.split(' ')[0])} — we notified you that your subscription expired on <b>${expiredOn}</b>, and since it hasn't been renewed, access is now closed. Pay below to unlock your account again.</p>
+      <div class="lockout-plans">
+        ${Object.entries(PLANS).map(([key,p])=>`
+          <div class="lockout-plan">
+            <div>
+              <div class="pname">${p.label}</div>
+              <div class="pprice">${money(p.price)} · ${esc(p.desc)}</div>
+            </div>
+            <button data-pay="${key}">Pay & unlock</button>
+          </div>`).join('')}
+      </div>
+      <div class="lockout-foot">Payments are simulated for this prototype and recorded to the ledger and ERP sync log.<br><a href="#" id="lockoutLogout" style="color:var(--ink-soft); text-decoration:underline;">Log out instead</a></div>
+    </div>
+  </div>`;
+}
+function bindLockoutEvents(){
+  document.querySelectorAll('[data-pay]').forEach(b=>{
+    b.onclick = ()=>paySubscription(b.dataset.pay);
+  });
+  const lo = document.getElementById('lockoutLogout');
+  if(lo) lo.onclick = async (e)=>{ e.preventDefault(); STATE.session=null; VIEW.subLocked=false; await persist(); VIEW.tab='dashboard'; render(); };
+}
+
+/* ---------- SHELL ---------- */
+const NAV = [
+  {id:'dashboard', label:'Dashboard', ic:'⌂'},
+  {id:'doctors', label:'Find a Doctor', ic:'⚕'},
+  {id:'hospitals', label:'Hospitals', ic:'🏥'},
+  {id:'appointments', label:'My Appointments', ic:'🗓'},
+  {id:'billing', label:'Billing', ic:'💳'},
+  {id:'ledger', label:'Appointment Ledger', ic:'⛓'},
+  {id:'erp', label:'ERP Sync Log', ic:'⇄'},
+];
+const NAV_ADMIN = [
+  {id:'admin', label:'Admin Dashboard', ic:'📊'},
+  {id:'ledger', label:'Appointment Ledger', ic:'⛓'},
+  {id:'erp', label:'ERP Sync Log', ic:'⇄'},
+];
+
+function renderShell(){
+  const u = currentUser();
+  const navList = u && u.isAdmin ? NAV_ADMIN : NAV;
+  const navHtml = navList.map(n=>`<button class="nav-item ${VIEW.tab===n.id?'active':''}" data-nav="${n.id}"><span class="ic">${n.ic}</span>${n.label}</button>`).join('');
+  return `
+  <div class="mobile-nav">${navList.map(n=>`<button class="${VIEW.tab===n.id?'active':''}" data-nav="${n.id}">${n.label}</button>`).join('')}</div>
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand-mark">
+        <svg class="chain-icon" viewBox="0 0 34 34" fill="none" width="26" height="26"><circle cx="12" cy="12" r="7" stroke="#EAF3EF" stroke-width="2.4"/><circle cx="22" cy="22" r="7" stroke="#B98A1E" stroke-width="2.4"/></svg>
+        <div class="name">MedFind${u && u.isAdmin ? ' · Admin' : ''}</div>
+      </div>
+      <nav>${navHtml}</nav>
+      <div class="sidebar-foot">
+        <div class="user-chip"><div class="av">${esc((u?.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div><div>${esc(u?.name||'')}</div></div>
+        <button class="logout-btn" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+    <div class="main" id="mainArea">
+      ${ u && !u.isAdmin && u.subscription && u.subscription.status==='expired' ? `
+        <div class="sub-banner">
+          <div><b>⚠️ Your subscription has expired.</b>It expired on ${new Date(u.subscription.expiresAt).toLocaleDateString()}. Renew now — if it's not paid before your next visit, MedFind will lock your account.</div>
+          <button class="btn-primary" data-nav="billing">Renew now</button>
+        </div>` : '' }
+      ${renderTab()}
+    </div>
+  </div>`;
+}
+
+function renderTab(){
+  if(VIEW.tab==='admin') return renderAdminDashboard();
+  if(VIEW.tab==='dashboard') return renderDashboard();
+  if(VIEW.tab==='doctors') return renderDoctors();
+  if(VIEW.tab==='hospitals') return renderHospitals();
+  if(VIEW.tab==='appointments') return renderAppointments();
+  if(VIEW.tab==='billing') return renderBilling();
+  if(VIEW.tab==='ledger') return renderLedger();
+  if(VIEW.tab==='erp') return renderErp();
+  return '';
+}
+
+function bindShellEvents(){
+  document.querySelectorAll('[data-nav]').forEach(b=>{
+    b.onclick = ()=>{ VIEW.tab = b.dataset.nav; VIEW.selectedDoctor=null; render(); };
+  });
+  const lo = document.getElementById('logoutBtn');
+  if(lo) lo.onclick = async ()=>{ STATE.session=null; VIEW.subLocked=false; await persist(); VIEW.tab='dashboard'; render(); };
+  bindTabEvents();
+}
+
+function bindTabEvents(){
+  if(VIEW.tab==='doctors') bindDoctorsEvents();
+  if(VIEW.tab==='hospitals') bindHospitalsEvents();
+  if(VIEW.tab==='appointments') bindAppointmentsEvents();
+  if(VIEW.tab==='billing') bindBillingEvents();
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDashboard(){
+  const u = currentUser();
+  const myBookings = STATE.bookings.filter(b=>b.username===u.username);
+  const upcoming = myBookings.filter(b=>b.status==='upcoming').sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const next = upcoming[0];
+  const doc = next ? STATE.doctors.find(d=>d.id===next.doctorId) : null;
+  const topRated = [...STATE.doctors].sort((a,b)=>b.rating-a.rating).slice(0,3);
+
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Dashboard</div>
+    <h1>Hi, ${esc(u.name.split(' ')[0])} 👋</h1>
+    <p>Here's a quick look at your care — your next visit, and a few highly-rated doctors you might want to see.</p>
+  </div>
+  <div class="stat-row">
+    <div class="stat-card"><div class="num">${myBookings.length}</div><div class="lbl">Total bookings</div></div>
+    <div class="stat-card"><div class="num">${upcoming.length}</div><div class="lbl">Upcoming visits</div></div>
+    <div class="stat-card"><div class="num">${myBookings.filter(b=>b.status==='completed').length}</div><div class="lbl">Completed visits</div></div>
+    <div class="stat-card"><div class="num">${STATE.ledger.length}</div><div class="lbl">Ledger blocks recorded</div></div>
+  </div>
+
+  <div class="card panel" style="margin-bottom:22px;">
+    <div style="font-weight:700; margin-bottom:12px;">Your next appointment</div>
+    ${ next && doc ? `
+      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+        <div class="avatar" style="background:${doc.color}">${doc.initials}</div>
+        <div style="flex:1; min-width:180px;">
+          <div style="font-weight:700;">${esc(doc.name)}</div>
+          <div class="doc-spec">${esc(doc.specialty)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;">${fmtDate(new Date(next.date))}</div>
+          <div style="color:var(--ink-soft); font-size:13px;">${next.time}</div>
+        </div>
+      </div>
+    ` : `<div class="empty" style="padding:20px;"><div class="ic">🗓</div>No upcoming appointments yet. Head to <b>Find a Doctor</b> to book one.</div>` }
+  </div>
+
+  <div style="font-weight:700; margin-bottom:12px;">Highly rated doctors</div>
+  <div class="doc-grid">
+    ${topRated.map(d=>doctorCardHtml(d)).join('')}
+  </div>
+  `;
+}
+
+/* ---------- DOCTORS LIST ---------- */
+function doctorCardHtml(d){
+  return `
+  <div class="doc-card" data-doc="${d.id}">
+    <div class="doc-top">
+      <div class="avatar" style="background:${d.color}">${d.initials}</div>
+      <div>
+        <div class="doc-name">${esc(d.name)}</div>
+        <div class="doc-spec">${esc(d.specialty)}</div>
+      </div>
+    </div>
+    <div style="font-size:12.5px; color:var(--ink-soft);">${d.yearsExperience} years of practice</div>
+    <div class="doc-meta-row">
+      <div class="stars">${starString(d.rating)} <span style="color:var(--ink-soft); font-family:var(--sans);">${d.rating}</span></div>
+      <div class="fee-tag">${money(d.fee)}</div>
+    </div>
+    <div style="font-size:11.5px; color:var(--ink-faint); margin-top:6px;">${d.visits} patients served</div>
+  </div>`;
+}
+
+function renderDoctors(){
+  if(VIEW.selectedDoctor) return renderDoctorProfile(VIEW.selectedDoctor);
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Find a doctor</div>
+    <h1>Browse by specialty</h1>
+    <p>See each doctor's experience, consultation fee, rating and how many patients they've served — then check live availability.</p>
+  </div>
+  <div class="toolbar">
+    <input id="docSearch" placeholder="Search by name or specialty…">
+    <select id="docFilter">
+      <option value="">All specialties</option>
+      ${SPECIALTIES.map(s=>`<option value="${s}">${s}</option>`).join('')}
+    </select>
+  </div>
+  <div class="doc-grid" id="docGrid">
+    ${STATE.doctors.map(d=>doctorCardHtml(d)).join('')}
+  </div>`;
+}
+
+function bindDoctorsEvents(){
+  document.querySelectorAll('[data-doc]').forEach(c=>{
+    c.onclick = ()=>{ VIEW.selectedDoctor=c.dataset.doc; VIEW.selectedDate=null; VIEW.selectedSlot=null; render(); };
+  });
+  const search = document.getElementById('docSearch');
+  const filter = document.getElementById('docFilter');
+  function applyFilter(){
+    const q = (search?.value||'').toLowerCase();
+    const spec = filter?.value||'';
+    const filtered = STATE.doctors.filter(d=>
+      (!spec || d.specialty===spec) &&
+      (!q || d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q))
+    );
+    document.getElementById('docGrid').innerHTML = filtered.length ? filtered.map(d=>doctorCardHtml(d)).join('') : `<div class="empty" style="grid-column:1/-1;"><div class="ic">🔍</div>No doctors match that search.</div>`;
+    document.querySelectorAll('[data-doc]').forEach(c=>{
+      c.onclick = ()=>{ VIEW.selectedDoctor=c.dataset.doc; VIEW.selectedDate=null; VIEW.selectedSlot=null; render(); };
+    });
+  }
+  if(search) search.oninput = applyFilter;
+  if(filter) filter.onchange = applyFilter;
+}
+
+/* ---------- HOSPITALS ---------- */
+function renderHospitals(){
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Partner hospitals</div>
+    <h1>Find a hospital with an available doctor</h1>
+    <p>Browse partner hospitals and see which affiliated doctors still have open slots today, then tap a doctor to book.</p>
+  </div>
+  <div class="hosp-grid">
+    ${HOSPITALS.map(h=>{
+      const docs = STATE.doctors.filter(d=>d.hospitalId===h.id);
+      const availCount = docs.filter(doctorAvailableToday).length;
+      return `
+      <div class="card panel hosp-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+          <div>
+            <div style="font-weight:700; font-size:16px;">${esc(h.name)}</div>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">${esc(h.address)}</div>
+          </div>
+          <span class="hosp-avail-badge ${availCount>0?'yes':'no'}">${availCount>0 ? availCount+' available today' : 'fully booked today'}</span>
+        </div>
+        <div class="hosp-doc-list">
+          ${docs.map(d=>{
+            const avail = doctorAvailableToday(d);
+            return `
+            <div class="hosp-doc-row" data-doc="${d.id}">
+              <div class="avatar" style="width:36px;height:36px;font-size:12px;background:${d.color}">${d.initials}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-weight:600; font-size:13.5px;">${esc(d.name)}</div>
+                <div style="font-size:11.5px; color:var(--ink-soft);">${esc(d.specialty)} · ${money(d.fee)}</div>
+              </div>
+              <span class="doc-avail-dot ${avail?'yes':'no'}">${avail?'Available today':'Booked up'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+function bindHospitalsEvents(){
+  document.querySelectorAll('[data-doc]').forEach(el=>{
+    el.onclick = ()=>{ VIEW.tab='doctors'; VIEW.selectedDoctor=el.dataset.doc; VIEW.selectedDate=null; VIEW.selectedSlot=null; render(); };
+  });
+}
+
+/* ---------- DOCTOR PROFILE + BOOKING ---------- */
+function renderDoctorProfile(id){
+  const d = STATE.doctors.find(x=>x.id===id);
+  if(!d) { VIEW.selectedDoctor=null; return renderDoctors(); }
+  const days = nextDays(10);
+  if(!VIEW.selectedDate) VIEW.selectedDate = isoDay(days[0]);
+  const bookedForDay = d.bookedSlots[VIEW.selectedDate] || [];
+  const isToday = VIEW.selectedDate === isoDay(new Date());
+  const nowHM = new Date().toTimeString().slice(0,5);
+  const slots = timeSlotsForDay();
+
+  return `
+  <button class="btn-ghost" id="backToDoctors" style="margin-bottom:18px;">← Back to doctors</button>
+  <div class="card panel">
+    <div class="profile-head">
+      <div class="avatar" style="background:${d.color}">${d.initials}</div>
+      <div style="flex:1; min-width:220px;">
+        <h2>${esc(d.name)}</h2>
+        <div><span class="badge">${esc(d.specialty)}</span><span class="badge">${d.yearsExperience} yrs experience</span><span class="badge">${esc((HOSPITALS.find(h=>h.id===d.hospitalId)||{}).name||'')}</span></div>
+      </div>
+      <div style="text-align:right;">
+        <div class="fee-tag" style="font-size:20px;">${money(d.fee)}</div>
+        <div style="font-size:12px; color:var(--ink-soft);">per consultation</div>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric"><div class="v">${d.yearsExperience}</div><div class="k">Years serving as a doctor</div></div>
+      <div class="metric"><div class="v">${d.rating} ${starString(d.rating)}</div><div class="k">${d.ratingCount} patient ratings</div></div>
+      <div class="metric"><div class="v">${d.visits}</div><div class="k">Patients visited</div></div>
+      <div class="metric"><div class="v">${money(d.fee)}</div><div class="k">Consultation fee</div></div>
+    </div>
+
+    <div class="bio">${esc(d.bio)}</div>
+
+    <div style="font-weight:700; margin-bottom:10px;">Pick a day</div>
+    <div class="day-strip">
+      ${days.map(dt=>{
+        const iso = isoDay(dt);
+        return `<div class="day-chip ${VIEW.selectedDate===iso?'sel':''}" data-day="${iso}">
+          <div class="d">${dt.toLocaleDateString(undefined,{weekday:'short'})}</div>
+          <div class="n">${dt.getDate()}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="font-weight:700; margin-bottom:10px;">Available times — ${fmtDate(new Date(VIEW.selectedDate))}</div>
+    <div class="slot-grid">
+      ${slots.map(t=>{
+        const taken = bookedForDay.includes(t);
+        const past = isToday && t < nowHM;
+        const disabled = taken || past;
+        const sel = VIEW.selectedSlot===t;
+        return `<button class="slot ${sel?'sel':''}" data-slot="${t}" ${disabled?'disabled':''}>${t}</button>`;
+      }).join('')}
+    </div>
+
+    ${VIEW.selectedSlot ? `
+      <div class="confirm-box">
+        <div style="font-weight:700; margin-bottom:6px;">Confirm your booking</div>
+        <div style="font-size:13.5px; color:var(--ink-soft); margin-bottom:12px;">
+          ${esc(d.name)} · ${fmtDate(new Date(VIEW.selectedDate))} at ${VIEW.selectedSlot} · ${money(d.fee)}
+        </div>
+        <button class="btn-primary" id="confirmBookBtn" style="width:auto; padding:11px 22px;">Book appointment</button>
+      </div>
+    ` : ''}
+  </div>`;
+}
+
+function bindDoctorProfileEvents(){
+  const back = document.getElementById('backToDoctors');
+  if(back) back.onclick = ()=>{ VIEW.selectedDoctor=null; render(); };
+  document.querySelectorAll('[data-day]').forEach(el=>{
+    el.onclick = ()=>{ VIEW.selectedDate = el.dataset.day; VIEW.selectedSlot=null; render(); };
+  });
+  document.querySelectorAll('[data-slot]').forEach(el=>{
+    el.onclick = ()=>{ VIEW.selectedSlot = el.dataset.slot; render(); };
+  });
+  const confirmBtn = document.getElementById('confirmBookBtn');
+  if(confirmBtn) confirmBtn.onclick = async ()=>{
+    await bookAppointment(VIEW.selectedDoctor, VIEW.selectedDate, VIEW.selectedSlot);
+  };
+}
+
+async function bookAppointment(doctorId, date, time){
+  const d = STATE.doctors.find(x=>x.id===doctorId);
+  const u = currentUser();
+  if(!d || !u) return;
+  d.bookedSlots[date] = d.bookedSlots[date] || [];
+  if(d.bookedSlots[date].includes(time)){ toast('That slot was just taken — pick another.'); render(); return; }
+  d.bookedSlots[date].push(time);
+  d.visits += 1;
+
+  const booking = {
+    id: crypto.randomUUID(),
+    username: u.username,
+    doctorId: d.id,
+    date, time,
+    fee: d.fee,
+    status: 'upcoming',
+    createdAt: new Date().toISOString()
+  };
+  STATE.bookings.push(booking);
+
+  await addLedgerBlock('appointment_created', { bookingId:booking.id, patient:u.username, doctor:d.name, date, time, fee:d.fee });
+  addErpLog('Appointment scheduled', 'Scheduling', `${d.name} · ${date} ${time} · patient ${u.username}`);
+  addErpLog('Invoice pre-authorized', 'Billing', `${money(d.fee)} hold for booking ${booking.id.slice(0,8)}`);
+
+  await persist();
+  VIEW.selectedSlot = null;
+  toast('Appointment booked with '+d.name+' on '+fmtDate(new Date(date))+' at '+time+'.');
+  VIEW.tab = 'appointments';
+  VIEW.selectedDoctor = null;
+  render();
+}
+
+/* ---------- APPOINTMENTS ---------- */
+function renderAppointments(){
+  const u = currentUser();
+  const mine = STATE.bookings.filter(b=>b.username===u.username).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  return `
+  <div class="page-head">
+    <div class="eyebrow">My appointments</div>
+    <h1>Your bookings</h1>
+    <p>Track upcoming visits, mark past ones complete, and rate your doctor.</p>
+  </div>
+  <div class="card panel">
+    ${ mine.length===0 ? `<div class="empty"><div class="ic">🗓</div>No bookings yet — go to <b>Find a Doctor</b> to book your first appointment.</div>` :
+    mine.map(b=>{
+      const d = STATE.doctors.find(x=>x.id===b.doctorId);
+      return `
+      <div class="appt-row" data-booking="${b.id}">
+        <div class="appt-doc">
+          <div class="avatar" style="background:${d.color}; width:42px; height:42px; font-size:14px;">${d.initials}</div>
+          <div>
+            <div style="font-weight:700;">${esc(d.name)}</div>
+            <div style="font-size:12.5px; color:var(--ink-soft);">${d.specialty} · ${fmtDate(new Date(b.date))} at ${b.time} · ${money(b.fee)}</div>
+            ${b.status==='completed' && b.userRating ? `<div class="rate-stars" style="margin-top:6px;">${[1,2,3,4,5].map(n=>`<span class="${n<=b.userRating?'on':''}">★</span>`).join('')}</div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="status-pill ${b.status}">${b.status}</span>
+          ${b.status==='upcoming' ? `
+            <div class="row-actions">
+              <button class="btn-sm gold" data-action="complete" data-id="${b.id}">Mark completed</button>
+              <button class="btn-sm danger" data-action="cancel" data-id="${b.id}">Cancel</button>
+            </div>` : ''}
+          ${b.status==='completed' && !b.userRating ? `
+            <div class="rate-stars" data-rate="${b.id}">${[1,2,3,4,5].map(n=>`<span data-star="${n}">★</span>`).join('')}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('') }
+  </div>`;
+}
+
+function bindAppointmentsEvents(){
+  document.querySelectorAll('[data-action="cancel"]').forEach(b=>{
+    b.onclick = ()=>cancelBooking(b.dataset.id);
+  });
+  document.querySelectorAll('[data-action="complete"]').forEach(b=>{
+    b.onclick = ()=>completeBooking(b.dataset.id);
+  });
+  document.querySelectorAll('[data-rate]').forEach(group=>{
+    group.querySelectorAll('[data-star]').forEach(star=>{
+      star.onclick = ()=>rateBooking(group.dataset.rate, parseInt(star.dataset.star));
+    });
+  });
+}
+
+async function cancelBooking(id){
+  const b = STATE.bookings.find(x=>x.id===id);
+  if(!b) return;
+  b.status = 'cancelled';
+  const d = STATE.doctors.find(x=>x.id===b.doctorId);
+  if(d && d.bookedSlots[b.date]) d.bookedSlots[b.date] = d.bookedSlots[b.date].filter(t=>t!==b.time);
+  await addLedgerBlock('appointment_cancelled', { bookingId:b.id, doctor:d?.name, date:b.date, time:b.time });
+  addErpLog('Appointment cancelled', 'Scheduling', `Booking ${id.slice(0,8)} cancelled — slot released`);
+  await persist();
+  toast('Appointment cancelled.');
+  render();
+}
+async function completeBooking(id){
+  const b = STATE.bookings.find(x=>x.id===id);
+  if(!b) return;
+  b.status = 'completed';
+  await addLedgerBlock('appointment_completed', { bookingId:b.id, date:b.date, time:b.time });
+  addErpLog('Visit closed', 'Billing', `Booking ${id.slice(0,8)} marked complete — invoice finalized`);
+  await persist();
+  render();
+}
+async function rateBooking(id, stars){
+  const b = STATE.bookings.find(x=>x.id===id);
+  if(!b || b.userRating) return;
+  b.userRating = stars;
+  const d = STATE.doctors.find(x=>x.id===b.doctorId);
+  if(d){
+    d.rating = +(((d.rating*d.ratingCount) + stars) / (d.ratingCount+1)).toFixed(2);
+    d.ratingCount += 1;
+  }
+  await addLedgerBlock('rating_recorded', { bookingId:b.id, doctor:d?.name, stars });
+  await persist();
+  toast('Thanks for rating your visit!');
+  render();
+}
+
+/* ---------- BILLING / SUBSCRIPTION ---------- */
+function renderBilling(){
+  const u = currentUser();
+  const sub = u.subscription;
+  const active = sub && sub.status==='active';
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Billing</div>
+    <h1>Subscription</h1>
+    <p>MedFind runs on a subscription. Pay monthly for flexibility, or annually to save — renew any time before or after it lapses.</p>
+  </div>
+
+  <div class="card panel billing-card">
+    <div>
+      <span class="billing-status ${active?'active':'expired'}">${active?'● Active':'● Expired'}</span>
+      <div style="margin-top:10px; font-weight:700; font-size:18px;">${sub ? PLANS[sub.plan].label+' plan' : 'No plan yet'}</div>
+      <div style="font-size:13px; color:var(--ink-soft); margin-top:4px;">
+        ${sub ? (active
+          ? `Renews / expires on <b>${new Date(sub.expiresAt).toLocaleDateString()}</b> (${daysLeft(sub.expiresAt)} day${daysLeft(sub.expiresAt)===1?'':'s'} left)`
+          : `Expired on <b>${new Date(sub.expiresAt).toLocaleDateString()}</b> — renew below to keep using MedFind.`) : ''}
+      </div>
+    </div>
+  </div>
+
+  <div style="font-weight:700; margin-bottom:4px;">${active ? 'Renew or switch plan' : 'Choose a plan to renew'}</div>
+  <div class="plan-grid">
+    ${Object.entries(PLANS).map(([key,p])=>`
+      <div class="plan-buy ${sub && sub.plan===key && active ? 'current':''}">
+        <div class="pt">${p.label} ${sub && sub.plan===key && active ? ' · current' : ''}</div>
+        <div class="pp">${money(p.price)} <span style="color:var(--ink-soft); font-weight:600; font-size:11.5px;">/ ${key==='monthly'?'month':'year'}</span></div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:10px;">${esc(p.desc)}</div>
+        <button data-pay="${key}">${active ? 'Pay & renew' : 'Pay & unlock'}</button>
+      </div>`).join('')}
+  </div>
+
+  <div class="card panel" style="margin-top:24px;">
+    <div style="font-weight:700; margin-bottom:10px;">Payment history</div>
+    ${ !sub || !sub.history.length ? `<div class="empty" style="padding:20px;"><div class="ic">💳</div>No payments yet.</div>` : `
+    <table class="pay-history">
+      <thead><tr><th>Date</th><th>Plan</th><th>Amount</th></tr></thead>
+      <tbody>
+        ${sub.history.map(h=>`<tr><td>${new Date(h.date).toLocaleString()}</td><td>${PLANS[h.plan].label}</td><td>${money(h.amount)}</td></tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+function bindBillingEvents(){
+  document.querySelectorAll('[data-pay]').forEach(b=>{
+    b.onclick = ()=>paySubscription(b.dataset.pay);
+  });
+}
+
+/* ---------- ADMIN DASHBOARD ---------- */
+function renderAdminDashboard(){
+  const s = computeAdminStats();
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Admin</div>
+    <h1>System analytics</h1>
+    <p>A live view of customer subscriptions, revenue, and booking activity across every account on MedFind.</p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card"><div class="num">${s.customers.length}</div><div class="lbl">Total customers</div></div>
+    <div class="stat-card"><div class="num">${s.activeSubs}</div><div class="lbl">Active subscriptions</div></div>
+    <div class="stat-card"><div class="num">${s.expiredSubs}</div><div class="lbl">Expired subscriptions</div></div>
+    <div class="stat-card"><div class="num">${money(s.totalRevenue)}</div><div class="lbl">Total subscription revenue</div></div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-card"><div class="num">${s.totalBookings}</div><div class="lbl">Total bookings</div></div>
+    <div class="stat-card"><div class="num">${s.completed}</div><div class="lbl">Completed visits</div></div>
+    <div class="stat-card"><div class="num">${s.cancelled}</div><div class="lbl">Cancelled bookings</div></div>
+    <div class="stat-card"><div class="num">${money(s.consultationVolume)}</div><div class="lbl">Consultation fees processed</div></div>
+  </div>
+
+  <div class="admin-two-col">
+    <div class="card panel">
+      <div style="font-weight:700; margin-bottom:14px;">Revenue by plan</div>
+      ${['monthly','annual'].map(k=>{
+        const amt = k==='monthly' ? s.monthlyRevenue : s.annualRevenue;
+        const pct = s.totalRevenue ? Math.round(amt/s.totalRevenue*100) : 0;
+        return `
+        <div class="admin-bar-row">
+          <div class="admin-bar-label"><span>${PLANS[k].label}</span><span style="color:var(--ink-soft); font-weight:600;">${money(amt)}</span></div>
+          <div class="admin-bar-track"><div class="admin-bar-fill" style="width:${pct}%; background:${k==='monthly'?'var(--teal)':'var(--gold)'};"></div></div>
+        </div>`;
+      }).join('')}
+      ${ s.totalRevenue===0 ? `<div style="font-size:12.5px; color:var(--ink-faint); margin-top:8px;">No payments recorded yet.</div>` : ''}
+    </div>
+
+    <div class="card panel">
+      <div style="font-weight:700; margin-bottom:14px;">Revenue by month</div>
+      ${ s.monthData.length===0 ? `<div style="font-size:12.5px; color:var(--ink-faint);">No payment history yet.</div>` :
+        s.monthData.map(m=>{
+          const pct = Math.round(m.amount/s.maxMonth*100);
+          const label = new Date(m.month+'-01').toLocaleDateString(undefined,{month:'short', year:'numeric'});
+          return `
+          <div class="admin-bar-row">
+            <div class="admin-bar-label"><span>${label}</span><span style="color:var(--ink-soft); font-weight:600;">${money(m.amount)}</span></div>
+            <div class="admin-bar-track"><div class="admin-bar-fill" style="width:${pct}%; background:var(--teal-dark);"></div></div>
+          </div>`;
+        }).join('')
+      }
+    </div>
+  </div>
+
+  <div class="card panel" style="margin-top:22px;">
+    <div style="font-weight:700; margin-bottom:12px;">Customer accounts</div>
+    ${ s.customers.length===0 ? `<div class="empty" style="padding:20px;"><div class="ic">👤</div>No customers yet.</div>` : `
+    <table class="admin-table">
+      <thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Total paid</th><th>Joined</th></tr></thead>
+      <tbody>
+        ${s.customers.map(u=>{
+          const paid = ((u.subscription && u.subscription.history) || []).reduce((a,h)=>a+h.amount,0);
+          return `<tr>
+            <td>${esc(u.name)} <span style="color:var(--ink-soft); font-size:11.5px;">@${esc(u.username)}</span></td>
+            <td>${u.subscription ? PLANS[u.subscription.plan].label : '—'}</td>
+            <td>${u.subscription ? `<span class="billing-status ${u.subscription.status}">${u.subscription.status==='active'?'● Active':'● Expired'}</span>` : '—'}</td>
+            <td>${money(paid)}</td>
+            <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`}
+  </div>
+
+  <div class="card panel" style="margin-top:22px;">
+    <div style="font-weight:700; margin-bottom:12px;">All subscription payments — where the money came from</div>
+    ${ s.payments.length===0 ? `<div class="empty" style="padding:20px;"><div class="ic">💳</div>No payments recorded yet.</div>` : `
+    <table class="admin-table">
+      <thead><tr><th>Date</th><th>Customer</th><th>Plan</th><th>Amount</th></tr></thead>
+      <tbody>
+        ${s.payments.map(p=>`<tr>
+          <td>${new Date(p.date).toLocaleString()}</td>
+          <td>${esc(p.name)} <span style="color:var(--ink-soft); font-size:11.5px;">@${esc(p.username)}</span></td>
+          <td>${PLANS[p.plan].label}</td>
+          <td>${money(p.amount)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+
+/* ---------- LEDGER ---------- */
+function renderLedger(){
+  const blocks = [...STATE.ledger].reverse();
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Appointment ledger</div>
+    <h1>Tamper-evident booking history</h1>
+    <p>Every booking, cancellation, and rating is hashed together with the block before it — changing any past record would break the chain.</p>
+  </div>
+  <div class="ledger-note">This is a genuine SHA-256 hash-chain computed in your browser to demonstrate how a blockchain-style audit trail would work — it runs locally rather than on a distributed network, which is what a production blockchain integration would require.</div>
+  ${ blocks.length===0 ? `<div class="empty"><div class="ic">⛓</div>No ledger activity yet — book an appointment to create the first block.</div>` :
+    blocks.map(bl=>`
+    <div class="block">
+      <div class="rail"><div class="dot"></div>${bl.index>0?'<div class="line"></div>':''}</div>
+      <div class="block-card">
+        <div class="idx">BLOCK #${bl.index} · ${new Date(bl.timestamp).toLocaleString()}</div>
+        <div class="ev">${bl.event.replace(/_/g,' ')}</div>
+        <div class="hash-line"><b>hash:</b> ${bl.hash}</div>
+        <div class="hash-line"><b>prev:</b> ${bl.prevHash}</div>
+      </div>
+    </div>`).join('')
+  }`;
+}
+
+/* ---------- ERP ---------- */
+function renderErp(){
+  return `
+  <div class="page-head">
+    <div class="eyebrow">ERP integration</div>
+    <h1>Sync log</h1>
+    <p>Simulated events showing what would be pushed to a clinic's ERP — scheduling and billing modules.</p>
+  </div>
+  <div class="erp-note">This log is mocked for the prototype. A real ERP integration (SAP, Oracle Health, or a hospital's own system) needs that vendor's API endpoints and credentials, plus a backend service to call them securely — a browser-only demo can't hold those secrets or make that connection.</div>
+  <div class="card panel">
+    ${ STATE.erpLog.length===0 ? `<div class="empty"><div class="ic">⇄</div>No sync events yet.</div>` : `
+    <table class="erp-table">
+      <thead><tr><th>Time</th><th>Event</th><th>Module</th><th>Detail</th><th>Status</th></tr></thead>
+      <tbody>
+        ${STATE.erpLog.map(l=>`<tr>
+          <td>${new Date(l.timestamp).toLocaleString()}</td>
+          <td>${esc(l.event)}</td>
+          <td>${esc(l.module)}</td>
+          <td>${esc(l.detail)}</td>
+          <td><span class="sync-ok">✓ Synced</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+
+/* ---------- render patch for profile events (since renderTab is generic) ---------- */
+const _origRender = render;
+render = function(){
+  _origRender();
+  if(STATE.session && VIEW.tab==='doctors' && VIEW.selectedDoctor) bindDoctorProfileEvents();
+};
+
+/* ---------- boot ---------- */
+(async function boot(){
+  await loadState();
+  if(STATE.session){
+    const u = currentUser();
+    if(u){
+      if(u.isAdmin){
+        VIEW.tab = 'admin';
+      } else {
+        if(!u.subscription) u.subscription = makeSubscription('monthly');
+        checkSubscriptionOnEntry(u);
+      }
+      await persist();
+    }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
